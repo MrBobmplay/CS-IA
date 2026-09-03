@@ -1,11 +1,10 @@
 """SQLite connection helpers for Surf Heat Manager."""
 
 import hashlib
-import os
 import sqlite3
 
-DB_FILE = os.path.join(os.path.dirname(__file__), "surf.db")
-SCHEMA_FILE = os.path.join(os.path.dirname(__file__), "schema.sql")
+DB_FILE = "surf.db"
+SCHEMA_FILE = "schema.sql"
 
 
 def connect():
@@ -18,7 +17,8 @@ def connect():
 def query(sql, params=()):
     """Run a SELECT and return all rows."""
     conn = connect()
-    rows = conn.execute(sql, params).fetchall()
+    cursor = conn.execute(sql, params)
+    rows = cursor.fetchall()
     conn.close()
     return rows
 
@@ -40,12 +40,16 @@ def hash_password(password):
 
 def setup():
     """Create the tables and add the default director account."""
+    schema_file = open(SCHEMA_FILE)
+    schema = schema_file.read()
+    schema_file.close()
+
     conn = connect()
-    with open(SCHEMA_FILE) as schema:
-        conn.executescript(schema.read())
+    conn.executescript(schema)
     conn.commit()
     conn.close()
 
-    if not query("SELECT id FROM users WHERE username = ?", ("director",)):
+    directors = query("SELECT id FROM users WHERE username = ?", ("director",))
+    if len(directors) == 0:
         run("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
             ("director", hash_password("surf2024"), "director"))

@@ -48,7 +48,7 @@ function showScreen(name) {
 
   let buttons = document.querySelectorAll("#menu button");
   for (let i = 0; i < buttons.length; i++) {
-    if (buttons[i].dataset.screen === name) {
+    if (buttons[i].getAttribute("data-screen") === name) {
       buttons[i].classList.add("active");
     } else {
       buttons[i].classList.remove("active");
@@ -333,7 +333,9 @@ async function clickLogout() {
 let menuButtons = document.querySelectorAll("#menu button[data-screen]");
 for (let i = 0; i < menuButtons.length; i++) {
   let button = menuButtons[i];
-  button.onclick = function () { showScreen(button.dataset.screen); };
+  button.onclick = function () {
+    showScreen(button.getAttribute("data-screen"));
+  };
 }
 
 document.getElementById("surferForm").onsubmit = submitSurfer;
