@@ -11,8 +11,13 @@ class Surfer:
         self.group_name = group_name
 
     def as_dict(self):
-        return {"id": self.id, "name": self.name,
-                "skill": self.skill, "group_name": self.group_name}
+        """Turned into a dictionary so it can be sent to the browser."""
+        surfer = {}
+        surfer["id"] = self.id
+        surfer["name"] = self.name
+        surfer["skill"] = self.skill
+        surfer["group_name"] = self.group_name
+        return surfer
 
 
 class WaveScore:
@@ -30,8 +35,12 @@ class WaveScore:
         return round(self.raw_score * self.weight, 2)
 
     def as_dict(self):
-        return {"id": self.id, "raw_score": self.raw_score,
-                "weight": self.weight, "weighted": self.weighted()}
+        score = {}
+        score["id"] = self.id
+        score["raw_score"] = self.raw_score
+        score["weight"] = self.weight
+        score["weighted"] = self.weighted()
+        return score
 
 
 class Heat:
@@ -44,9 +53,16 @@ class Heat:
         self.surfers = surfers
 
     def as_dict(self):
-        return {"id": self.id, "round_number": self.round_number,
-                "heat_number": self.heat_number,
-                "surfers": [s.as_dict() for s in self.surfers]}
+        surfer_list = []
+        for surfer in self.surfers:
+            surfer_list.append(surfer.as_dict())
+
+        heat = {}
+        heat["id"] = self.id
+        heat["round_number"] = self.round_number
+        heat["heat_number"] = self.heat_number
+        heat["surfers"] = surfer_list
+        return heat
 
 
 class ForecastSlot:
@@ -59,5 +75,9 @@ class ForecastSlot:
         self.tide_level = tide_level
 
     def as_dict(self):
-        return {"id": self.id, "slot_time": self.slot_time,
-                "wave_height": self.wave_height, "tide_level": self.tide_level}
+        slot = {}
+        slot["id"] = self.id
+        slot["slot_time"] = self.slot_time
+        slot["wave_height"] = self.wave_height
+        slot["tide_level"] = self.tide_level
+        return slot

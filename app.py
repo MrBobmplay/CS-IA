@@ -1,10 +1,15 @@
 """Surf Heat Manager: the web server that joins the browser to the database."""
 
-from flask import Flask, jsonify, render_template, request, session
+from flask import Flask
+from flask import jsonify
+from flask import render_template
+from flask import request
+from flask import session
 
 import database
 from forecast_manager import forecast_manager
-from heat_manager import MAX_SURFERS, heat_manager
+from heat_manager import MAX_SURFERS
+from heat_manager import heat_manager
 from score_manager import score_manager
 
 app = Flask(__name__)
@@ -12,18 +17,16 @@ app.secret_key = "escola-de-surf-peniche"
 
 
 def is_director():
-    """Only a logged in director may change data; everyone else can look."""
+    """True if the person using the site has logged in as the director."""
     return session.get("role") == "director"
 
 
-def director_only():
-    """Return an error response if the current user may not write."""
-    if not is_director():
-        return jsonify({"error": "Only the director can do that."}), 403
-    return None
+def not_allowed():
+    """The message sent back when a viewer tries to change something."""
+    return jsonify({"error": "Only the director can do that."}), 403
 
 
-# ---- Pages --------------------------------------------------------------
+# ---- The page -----------------------------------------------------------
 
 @app.route("/")
 def home():
@@ -34,6 +37,7 @@ def home():
 
 @app.route("/api/session")
 def get_session():
+    """Tells the browser whether it is a director or a viewer."""
     return jsonify({"role": session.get("role", "viewer"),
                     "username": session.get("username", "")})
 
@@ -41,10 +45,14 @@ def get_session():
 @app.route("/api/login", methods=["POST"])
 def login():
     data = request.get_json()
+    username = data.get("username", "")
+    password = data.get("password", "")
+
     rows = database.query(
         "SELECT * FROM users WHERE username = ? AND password_hash = ?",
-        (data.get("username", ""), database.hash_password(data.get("password", ""))))
-    if not rows:
+        (username, database.hash_password(password)))
+
+    if len(rows) == 0:
         return jsonify({"error": "Wrong username or password."}), 401
 
     session["username"] = rows[0]["username"]
@@ -62,49 +70,59 @@ def logout():
 
 @app.route("/api/surfers")
 def get_surfers():
-    return jsonify({"surfers": [s.as_dict() for s in heat_manager.get_surfers()],
-                    "max_surfers": MAX_SURFERS})
+    surfers = []
+    for surfer in heat_manager.get_surfers():
+        surfers.append(surfer.as_dict())
+    return jsonify({"surfers": surfers, "max_surfers": MAX_SURFERS})
 
 
 @app.route("/api/surfers", methods=["POST"])
 def add_surfer():
-    blocked = director_only()
-    if blocked:
-        return blocked
+    if not is_director():
+        return not_allowed()
 
     data = request.get_json()
     try:
         heat_manager.add_surfer(data.get("name", ""),
                                 int(data.get("skill", 0)),
                                 data.get("group_name", ""))
-    except (ValueError, TypeError) as error:
+    except ValueError as error:
         return jsonify({"error": str(error)}), 400
+    except TypeError as error:
+        return jsonify({"error": str(error)}), 400
+
     return get_surfers()
 
 
-# ---- Heats (SC3, SC4, SC5) ---------------------------------------------
+# ---- Heat draw (SC3, SC4, SC5) -----------------------------------------
 
 @app.route("/api/heats")
 def get_heats():
     round_number = int(request.args.get("round", 1))
+
+    heats = []
+    for heat in heat_manager.get_heats(round_number):
+        heats.append(heat.as_dict())
+
     return jsonify({"round_number": round_number,
                     "rounds": heat_manager.rounds(),
-                    "heats": [h.as_dict() for h in heat_manager.get_heats(round_number)]})
+                    "heats": heats})
 
 
 @app.route("/api/draw", methods=["POST"])
 def draw():
-    blocked = director_only()
-    if blocked:
-        return blocked
+    if not is_director():
+        return not_allowed()
+
     try:
         heat_manager.draw_round(1)
     except ValueError as error:
         return jsonify({"error": str(error)}), 400
+
     return get_heats()
 
 
-# ---- Scores (SC6, SC7, SC8) --------------------------------------------
+# ---- Score entry (SC6, SC7, SC8) ---------------------------------------
 
 @app.route("/api/heats/<int:heat_id>")
 def get_heat(heat_id):
@@ -116,19 +134,22 @@ def get_heat(heat_id):
 
 @app.route("/api/scores", methods=["POST"])
 def add_score():
-    blocked = director_only()
-    if blocked:
-        return blocked
+    if not is_director():
+        return not_allowed()
 
     data = request.get_json()
     try:
         heat_id = int(data.get("heat_id"))
-        score_manager.add_score(heat_id,
-                                int(data.get("surfer_id")),
-                                float(data.get("raw_score")),
-                                float(data.get("weight", 1.0)))
-    except (ValueError, TypeError) as error:
+        surfer_id = int(data.get("surfer_id"))
+        raw_score = float(data.get("raw_score"))
+        weight = float(data.get("weight", 1.0))
+        score_manager.add_score(heat_id, surfer_id, raw_score, weight)
+    except ValueError as error:
         return jsonify({"error": str(error)}), 400
+    except TypeError as error:
+        return jsonify({"error": str(error)}), 400
+
+    # The heat is sent straight back so the browser can redraw the new totals.
     return jsonify(score_manager.heat_results(heat_id))
 
 
@@ -136,19 +157,26 @@ def add_score():
 
 @app.route("/api/advance", methods=["POST"])
 def advance():
-    blocked = director_only()
-    if blocked:
-        return blocked
+    if not is_director():
+        return not_allowed()
 
     data = request.get_json()
     try:
-        heats = score_manager.advance(int(data.get("round_number", 1)),
-                                      int(data.get("top_n", 2)))
-    except (ValueError, TypeError) as error:
+        round_number = int(data.get("round_number", 1))
+        top_n = int(data.get("top_n", 2))
+        new_heats = score_manager.advance(round_number, top_n)
+    except ValueError as error:
         return jsonify({"error": str(error)}), 400
-    return jsonify({"round_number": heats[0].round_number if heats else None,
+    except TypeError as error:
+        return jsonify({"error": str(error)}), 400
+
+    heats = []
+    for heat in new_heats:
+        heats.append(heat.as_dict())
+
+    return jsonify({"round_number": round_number + 1,
                     "rounds": heat_manager.rounds(),
-                    "heats": [h.as_dict() for h in heats]})
+                    "heats": heats})
 
 
 # ---- Leaderboard (SC11, SC12) ------------------------------------------
@@ -168,17 +196,20 @@ def get_forecast():
 
 @app.route("/api/forecast", methods=["POST"])
 def add_forecast():
-    blocked = director_only()
-    if blocked:
-        return blocked
+    if not is_director():
+        return not_allowed()
 
     data = request.get_json()
     try:
-        forecast_manager.add_slot(data.get("slot_time", ""),
-                                  float(data.get("wave_height")),
-                                  float(data.get("tide_level")))
-    except (ValueError, TypeError) as error:
+        slot_time = data.get("slot_time", "")
+        wave_height = float(data.get("wave_height"))
+        tide_level = float(data.get("tide_level"))
+        forecast_manager.add_slot(slot_time, wave_height, tide_level)
+    except ValueError as error:
         return jsonify({"error": str(error)}), 400
+    except TypeError as error:
+        return jsonify({"error": str(error)}), 400
+
     return get_forecast()
 
 
@@ -187,8 +218,12 @@ def add_forecast():
 @app.route("/api/sheet")
 def sheet():
     round_number = int(request.args.get("round", 1))
-    return jsonify({"round_number": round_number,
-                    "heats": [h.as_dict() for h in heat_manager.get_heats(round_number)]})
+
+    heats = []
+    for heat in heat_manager.get_heats(round_number):
+        heats.append(heat.as_dict())
+
+    return jsonify({"round_number": round_number, "heats": heats})
 
 
 if __name__ == "__main__":
