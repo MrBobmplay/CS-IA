@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Surf Heat Manager</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+
+<header class="no-print">
+  <h1>Surf Heat Manager</h1>
+  <p>Escola de Surf Peniche</p>
+  <span id="whoami"></span>
+</header>
+
+<nav class="no-print" id="menu">
+  <button data-screen="leaderboard">Leaderboard</button>
+  <button data-screen="surfers" class="director">Add Surfer</button>
+  <button data-screen="draw" class="director">Heat Draw</button>
+  <button data-screen="forecast" class="director">Forecast</button>
+  <button data-screen="sheet" class="director">Heat Sheet</button>
+  <button data-screen="login" id="loginTab">Login</button>
+  <button id="logoutBtn" class="director">Log out</button>
+</nav>
+
+<p id="message" class="no-print"></p>
+
+<!-- Login screen -->
+<section id="screen-login" class="screen no-print">
+  <h2>Director login</h2>
+  <p class="hint">Viewers can read the leaderboard without logging in.</p>
+  <form id="loginForm">
+    <input id="username" placeholder="Username" autocomplete="username" />
+    <input id="password" type="password" placeholder="Password" autocomplete="current-password" />
+    <button type="submit">Log in</button>
+  </form>
+</section>
+
+<!-- Add surfer screen -->
+<section id="screen-surfers" class="screen no-print">
+  <h2>Add surfer</h2>
+  <form id="surferForm">
+    <input id="surferName" placeholder="Name" />
+    <input id="surferSkill" type="number" min="1" max="10" placeholder="Skill 1-10" />
+    <input id="surferGroup" placeholder="Group" />
+    <button type="submit">Add</button>
+  </form>
+  <p id="surferCount"></p>
+  <table id="surferTable">
+    <thead><tr><th>Name</th><th>Skill</th><th>Group</th></tr></thead>
+    <tbody></tbody>
+  </table>
+</section>
+
+<!-- Heat draw screen -->
+<section id="screen-draw" class="screen no-print">
+  <h2>Heat draw</h2>
+  <div class="controls">
+    <button id="drawBtn">Draw round 1</button>
+    <label>Round <select id="roundSelect"></select></label>
+    <label>Top <input id="topN" type="number" min="1" max="3" value="2" /> advance</label>
+    <button id="advanceBtn">Advance round</button>
+  </div>
+  <div id="heatList" class="panels"></div>
+</section>
+
+<!-- Score entry screen, reached by picking a heat -->
+<section id="screen-scores" class="screen no-print">
+  <h2 id="scoreTitle">Score entry</h2>
+  <button id="backToDraw">Back to heat draw</button>
+  <div id="scoreList"></div>
+</section>
+
+<!-- Forecast screen -->
+<section id="screen-forecast" class="screen no-print">
+  <h2>Forecast slots</h2>
+  <form id="forecastForm">
+    <input id="slotTime" placeholder="Time e.g. 09:00" />
+    <input id="waveHeight" type="number" step="0.1" placeholder="Wave height (m)" />
+    <input id="tideLevel" type="number" step="0.1" placeholder="Tide level (m)" />
+    <button type="submit">Add slot</button>
+  </form>
+  <table id="forecastTable">
+    <thead><tr><th>Rank</th><th>Time</th><th>Wave (m)</th><th>Tide (m)</th><th>Suitability</th></tr></thead>
+    <tbody></tbody>
+  </table>
+</section>
+
+<!-- Leaderboard screen -->
+<section id="screen-leaderboard" class="screen">
+  <h2>Leaderboard</h2>
+  <p class="hint no-print">Updates automatically every 2 seconds.</p>
+  <table id="leaderboardTable">
+    <thead><tr><th>#</th><th>Name</th><th>Group</th><th>Skill</th><th>Heats</th><th>Waves</th><th>Best wave</th><th>Total</th></tr></thead>
+    <tbody></tbody>
+  </table>
+</section>
+
+<!-- Printable A4 heat sheet -->
+<section id="screen-sheet" class="screen">
+  <div class="no-print controls">
+    <label>Round <select id="sheetRound"></select></label>
+    <button id="printBtn">Print</button>
+  </div>
+  <div id="sheet"></div>
+</section>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

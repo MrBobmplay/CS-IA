@@ -1,0 +1,51 @@
+"""SQLite connection helpers for Surf Heat Manager."""
+
+import hashlib
+import os
+import sqlite3
+
+DB_FILE = os.path.join(os.path.dirname(__file__), "surf.db")
+SCHEMA_FILE = os.path.join(os.path.dirname(__file__), "schema.sql")
+
+
+def connect():
+    """Open the database with rows that behave like dictionaries."""
+    conn = sqlite3.connect(DB_FILE)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def query(sql, params=()):
+    """Run a SELECT and return all rows."""
+    conn = connect()
+    rows = conn.execute(sql, params).fetchall()
+    conn.close()
+    return rows
+
+
+def run(sql, params=()):
+    """Run an INSERT, UPDATE or DELETE and return the new row id."""
+    conn = connect()
+    cursor = conn.execute(sql, params)
+    conn.commit()
+    new_id = cursor.lastrowid
+    conn.close()
+    return new_id
+
+
+def hash_password(password):
+    """Passwords are stored as a SHA-256 hash, never as plain text."""
+    return hashlib.sha256(password.encode()).hexdigest()
+
+
+def setup():
+    """Create the tables and add the default director account."""
+    conn = connect()
+    with open(SCHEMA_FILE) as schema:
+        conn.executescript(schema.read())
+    conn.commit()
+    conn.close()
+
+    if not query("SELECT id FROM users WHERE username = ?", ("director",)):
+        run("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
+            ("director", hash_password("surf2024"), "director"))

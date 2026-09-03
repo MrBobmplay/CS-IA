@@ -1,0 +1,114 @@
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  color: #14343f;
+  background: #f2f8fa;
+}
+
+header {
+  background: #14343f;
+  color: #fff;
+  padding: 16px 24px;
+  position: relative;
+}
+
+header h1 { margin: 0; font-size: 24px; }
+header p { margin: 4px 0 0; opacity: 0.8; }
+#whoami { position: absolute; right: 24px; top: 20px; }
+
+nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 24px;
+  background: #1f6f7d;
+}
+
+nav button {
+  background: #ffffff;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+nav button:hover { background: #d7eef2; }
+nav button.active { background: #ffd166; }
+
+#message {
+  margin: 12px 24px 0;
+  color: #b3261e;
+  min-height: 18px;
+}
+
+.screen { display: none; padding: 16px 24px 40px; }
+.screen.visible { display: block; }
+
+.hint { color: #55707a; font-size: 14px; }
+
+form { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+
+input, select {
+  padding: 8px;
+  border: 1px solid #a8c6ce;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+form button, .controls button, #backToDraw {
+  background: #1f6f7d;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 9px 16px;
+  cursor: pointer;
+}
+
+form button:hover, .controls button:hover { background: #14343f; }
+
+.controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 16px; }
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  background: #fff;
+}
+
+th, td { border: 1px solid #cfe2e6; padding: 8px; text-align: left; }
+th { background: #e3f1f4; }
+
+.panels { display: flex; flex-wrap: wrap; gap: 16px; }
+
+.panel {
+  background: #fff;
+  border: 1px solid #cfe2e6;
+  border-radius: 6px;
+  padding: 12px;
+  min-width: 260px;
+  cursor: pointer;
+}
+
+.panel:hover { border-color: #1f6f7d; }
+.panel h3 { margin: 0 0 8px; }
+.panel ul { margin: 0; padding-left: 18px; }
+
+.surfer-scores { background: #fff; border: 1px solid #cfe2e6; border-radius: 6px; padding: 12px; margin-bottom: 12px; }
+.surfer-scores h3 { margin: 0 0 8px; }
+.waves { color: #55707a; font-size: 14px; margin: 4px 0 8px; }
+.total { font-weight: bold; }
+
+.sheet-heat { page-break-inside: avoid; margin-bottom: 18px; }
+
+/* SC15: the printed A4 sheet shows only the heat tables. */
+@media print {
+  @page { size: A4; margin: 15mm; }
+  body { background: #fff; }
+  .no-print, header, nav, #message { display: none !important; }
+  .screen { display: none; padding: 0; }
+  #screen-sheet { display: block !important; }
+  table { font-size: 12pt; }
+  th { background: #eee; }
+}
