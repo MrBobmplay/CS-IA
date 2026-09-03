@@ -33,7 +33,6 @@ class ForecastManager:
             raise ValueError("Wave height must be between 0 and 6 metres.")
         if tide_level < 0 or tide_level > 4:
             raise ValueError("Tide level must be between 0 and 4 metres.")
-
         return database.run(
             "INSERT INTO forecast_slots (slot_time, wave_height, tide_level) "
             "VALUES (?, ?, ?)", (slot_time.strip(), wave_height, tide_level))
@@ -54,17 +53,14 @@ class ForecastManager:
     def ranked_slots(self):
         """Every slot, best first."""
         rows = database.query("SELECT * FROM forecast_slots ORDER BY slot_time")
-
         slots = []
         for row in rows:
-            slot_object = ForecastSlot(row["id"], row["slot_time"],
-                                       row["wave_height"], row["tide_level"])
-            slot = slot_object.as_dict()
+            slot = ForecastSlot(row["id"], row["slot_time"],
+                                row["wave_height"], row["tide_level"]).as_dict()
             slot["suitability"] = self.suitability(row["wave_height"], row["tide_level"])
             slots.append(slot)
 
         slots.sort(key=suitability_of, reverse=True)
-
         rank = 1
         for slot in slots:
             slot["rank"] = rank

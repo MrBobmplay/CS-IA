@@ -58,9 +58,8 @@ class ScoreManager:
             (heat_id, surfer_id))
         scores = []
         for row in rows:
-            score = WaveScore(row["id"], row["heat_id"], row["surfer_id"],
-                              row["raw_score"], row["weight"])
-            scores.append(score)
+            scores.append(WaveScore(row["id"], row["heat_id"], row["surfer_id"],
+                                    row["raw_score"], row["weight"]))
         return scores
 
     # ---- Algorithm 2 (SC7) ----------------------------------------------
@@ -82,24 +81,20 @@ class ScoreManager:
 
     def surfer_result(self, heat_id, surfer):
         """Everything the ranking and the screens need about one surfer."""
-        scores = self.get_scores(heat_id, surfer.id)
-
         score_list = []
         weighted = []
-        for score in scores:
+        best_wave = 0.0
+        for score in self.get_scores(heat_id, surfer.id):
             score_list.append(score.as_dict())
             weighted.append(score.weighted())
-
-        best_wave = 0.0
-        for score in weighted:
-            if score > best_wave:
-                best_wave = score
+            if score.weighted() > best_wave:
+                best_wave = score.weighted()
 
         result = surfer.as_dict()
         result["scores"] = score_list
-        result["total"] = self.best_two(list(weighted))
-        result["best_wave"] = best_wave
         result["wave_count"] = len(weighted)
+        result["best_wave"] = best_wave
+        result["total"] = self.best_two(weighted)
         return result
 
     # ---- Algorithm 3 (SC9, SC10) ----------------------------------------
@@ -122,20 +117,19 @@ class ScoreManager:
             place = place + 1
         return results
 
+    def rank_heat(self, heat):
+        """Rank the surfers in one heat against each other."""
+        results = []
+        for surfer in heat.surfers:
+            results.append(self.surfer_result(heat.id, surfer))
+        return self.rank(results)
+
     def heat_results(self, heat_id):
         """The surfers in one heat, ranked, with their scores and totals."""
         heat = heat_manager.get_heat(heat_id)
         if heat is None:
             return None
-
-        results = []
-        for surfer in heat.surfers:
-            results.append(self.surfer_result(heat_id, surfer))
-
-        answer = {}
-        answer["heat"] = heat.as_dict()
-        answer["results"] = self.rank(results)
-        return answer
+        return {"heat": heat.as_dict(), "results": self.rank_heat(heat)}
 
     def advance(self, round_number, top_n):
         """Send the top N of every heat in this round into a newly drawn round."""
@@ -147,19 +141,14 @@ class ScoreManager:
 
         moving_on = []
         for heat in heats:
-            results = []
-            for surfer in heat.surfers:
-                results.append(self.surfer_result(heat.id, surfer))
-            ranked = self.rank(results)
-
+            ranked = self.rank_heat(heat)
             for place in range(top_n):
                 if place < len(ranked):
                     for surfer in heat.surfers:
                         if surfer.id == ranked[place]["id"]:
                             moving_on.append(surfer)
 
-        drawn_heats = heat_manager.draw(moving_on)
-        return heat_manager.save_round(round_number + 1, drawn_heats)
+        return heat_manager.save_round(round_number + 1, heat_manager.draw(moving_on))
 
     # ---- Leaderboard (SC11) ---------------------------------------------
 

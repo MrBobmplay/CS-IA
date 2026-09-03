@@ -8,8 +8,7 @@ possible.
 """
 
 import database
-from models import Heat
-from models import Surfer
+from models import Heat, Surfer
 
 HEAT_SIZE = 4
 MAX_SURFERS = 32
@@ -30,8 +29,7 @@ class HeatManager:
         rows = database.query("SELECT * FROM surfers ORDER BY id")
         surfers = []
         for row in rows:
-            surfer = Surfer(row["id"], row["name"], row["skill"], row["group_name"])
-            surfers.append(surfer)
+            surfers.append(Surfer(row["id"], row["name"], row["skill"], row["group_name"]))
         return surfers
 
     def add_surfer(self, name, skill, group_name):
@@ -44,7 +42,6 @@ class HeatManager:
             raise ValueError("Skill level must be between 1 and 10.")
         if group_name.strip() == "":
             raise ValueError("A surfer needs a group.")
-
         return database.run(
             "INSERT INTO surfers (name, skill, group_name) VALUES (?, ?, ?)",
             (name.strip(), skill, group_name.strip()))
@@ -65,7 +62,6 @@ class HeatManager:
 
         ranked = sorted(surfers, key=skill_of, reverse=True)
         heat_count = self.count_heats(len(ranked))
-
         heats = []
         for i in range(heat_count):
             heats.append([])
@@ -103,30 +99,25 @@ class HeatManager:
     def best_swap(self, heats):
         """Try every possible swap and keep the best one.
 
-        A swap is only allowed if it lowers the number of group clashes.
-        Out of those, the best one is the swap between the two surfers whose
-        skill levels are closest. Returns None when no swap helps.
+        A swap is only allowed if it lowers the number of group clashes. Out
+        of those, the best one is between the two surfers whose skill levels
+        are closest. Returns None when no swap helps.
         """
         best_move = None
         best_change = 0
-
         for a in range(len(heats)):
             for b in range(a + 1, len(heats)):
                 before = self.clash_count(heats[a]) + self.clash_count(heats[b])
-
                 for i in range(len(heats[a])):
                     for j in range(len(heats[b])):
                         change = abs(heats[a][i].skill - heats[b][j].skill)
-
                         self.swap(heats, a, i, b, j)
                         after = self.clash_count(heats[a]) + self.clash_count(heats[b])
                         self.swap(heats, a, i, b, j)      # put them back again
-
                         if after < before:
                             if best_move is None or change < best_change:
                                 best_move = [a, i, b, j]
                                 best_change = change
-
         return best_move
 
     def fix_group_clashes(self, heats):
@@ -161,13 +152,11 @@ class HeatManager:
                     "INSERT INTO heat_surfers (heat_id, surfer_id) VALUES (?, ?)",
                     (heat_id, surfer.id))
             heat_number = heat_number + 1
-
         return self.get_heats(round_number)
 
     def draw_round(self, round_number):
         """Draw a round using every surfer entered."""
-        drawn_heats = self.draw(self.get_surfers())
-        return self.save_round(round_number, drawn_heats)
+        return self.save_round(round_number, self.draw(self.get_surfers()))
 
     def get_heats(self, round_number):
         """Every heat in one round."""
@@ -184,19 +173,16 @@ class HeatManager:
         rows = database.query("SELECT * FROM heats WHERE id = ?", (heat_id,))
         if len(rows) == 0:
             return None
-        heat_row = rows[0]
 
         members = database.query(
             "SELECT surfers.* FROM surfers "
             "JOIN heat_surfers ON heat_surfers.surfer_id = surfers.id "
             "WHERE heat_surfers.heat_id = ? ORDER BY surfers.name", (heat_id,))
-
         surfers = []
         for row in members:
             surfers.append(Surfer(row["id"], row["name"], row["skill"], row["group_name"]))
 
-        return Heat(heat_row["id"], heat_row["round_number"],
-                    heat_row["heat_number"], surfers)
+        return Heat(rows[0]["id"], rows[0]["round_number"], rows[0]["heat_number"], surfers)
 
     def rounds(self):
         """The round numbers that have been drawn so far."""

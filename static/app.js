@@ -9,11 +9,18 @@ function showMessage(text) {
   document.getElementById("message").textContent = text;
 }
 
+// Adds one row to a table, with one cell for each value given.
+function addRow(body, values) {
+  let row = body.insertRow();
+  for (let i = 0; i < values.length; i++) {
+    row.insertCell().textContent = values[i];
+  }
+}
+
 // This is the asynchronous function. It sends one request to the back end
 // and gives back the JSON, or null if the back end refused the request.
 async function api(address, method, body) {
-  let settings = {};
-  settings.method = method;
+  let settings = { method: method };
   if (body !== null) {
     settings.headers = { "Content-Type": "application/json" };
     settings.body = JSON.stringify(body);
@@ -21,7 +28,6 @@ async function api(address, method, body) {
 
   let response = await fetch(address, settings);
   let data = await response.json();
-
   if (response.ok === false) {
     showMessage(data.error);
     return null;
@@ -81,35 +87,26 @@ function applyRole(role, username) {
 function drawSurfers(data) {
   let body = document.querySelector("#surferTable tbody");
   body.innerHTML = "";
-
   for (let i = 0; i < data.surfers.length; i++) {
     let surfer = data.surfers[i];
-    let row = body.insertRow();
-    row.insertCell().textContent = surfer.name;
-    row.insertCell().textContent = surfer.skill;
-    row.insertCell().textContent = surfer.group_name;
+    addRow(body, [surfer.name, surfer.skill, surfer.group_name]);
   }
-
   document.getElementById("surferCount").textContent =
     data.surfers.length + " of " + data.max_surfers + " surfers entered";
 }
 
 async function loadSurfers() {
   let data = await api("/api/surfers", "GET", null);
-  if (data !== null) {
-    drawSurfers(data);
-  }
+  if (data !== null) { drawSurfers(data); }
 }
 
 async function submitSurfer(event) {
   event.preventDefault();
-
-  let surfer = {};
-  surfer.name = document.getElementById("surferName").value;
-  surfer.skill = Number(document.getElementById("surferSkill").value);
-  surfer.group_name = document.getElementById("surferGroup").value;
-
-  let data = await api("/api/surfers", "POST", surfer);
+  let data = await api("/api/surfers", "POST", {
+    name: document.getElementById("surferName").value,
+    skill: Number(document.getElementById("surferSkill").value),
+    group_name: document.getElementById("surferGroup").value
+  });
   if (data !== null) {
     drawSurfers(data);
     document.getElementById("surferForm").reset();
@@ -124,9 +121,7 @@ function fillRounds(select, rounds, chosen) {
     let option = document.createElement("option");
     option.value = rounds[i];
     option.textContent = "Round " + rounds[i];
-    if (rounds[i] === chosen) {
-      option.selected = true;
-    }
+    if (rounds[i] === chosen) { option.selected = true; }
     select.appendChild(option);
   }
 }
@@ -137,7 +132,6 @@ function drawHeats(data) {
 
   let list = document.getElementById("heatList");
   list.innerHTML = "";
-
   if (data.heats.length === 0) {
     list.innerHTML = "<p class='hint'>No heats drawn yet.</p>";
     return;
@@ -146,7 +140,6 @@ function drawHeats(data) {
   for (let i = 0; i < data.heats.length; i++) {
     let heat = data.heats[i];
     let text = "<h3>Heat " + heat.heat_number + "</h3><ul>";
-
     for (let j = 0; j < heat.surfers.length; j++) {
       let surfer = heat.surfers[j];
       text = text + "<li>" + surfer.name + " - " + surfer.group_name +
@@ -156,42 +149,28 @@ function drawHeats(data) {
     let panel = document.createElement("div");
     panel.className = "panel";
     panel.innerHTML = text + "</ul><p class='hint'>Click to enter scores</p>";
-    panel.onclick = makeHeatOpener(heat.id);
+    panel.onclick = function () { openHeat(heat.id); };
     list.appendChild(panel);
   }
 }
 
-// Gives each panel its own click function, holding its own heat number.
-function makeHeatOpener(heatId) {
-  return function () {
-    openHeat(heatId);
-  };
-}
-
 async function loadHeats(round) {
   let data = await api("/api/heats?round=" + round, "GET", null);
-  if (data !== null) {
-    drawHeats(data);
-  }
+  if (data !== null) { drawHeats(data); }
 }
 
 async function clickDraw() {
   let data = await api("/api/draw", "POST", {});
-  if (data !== null) {
-    drawHeats(data);
-  }
+  if (data !== null) { drawHeats(data); }
 }
 
 // SC9: the director chooses how many surfers advance from each heat.
 async function clickAdvance() {
-  let request = {};
-  request.round_number = currentRound;
-  request.top_n = Number(document.getElementById("topN").value);
-
-  let data = await api("/api/advance", "POST", request);
-  if (data !== null) {
-    drawHeats(data);
-  }
+  let data = await api("/api/advance", "POST", {
+    round_number: currentRound,
+    top_n: Number(document.getElementById("topN").value)
+  });
+  if (data !== null) { drawHeats(data); }
 }
 
 // ---- Score entry (SC6, SC7, SC8) ----------------------------------------
@@ -210,11 +189,7 @@ function drawHeatScores(data) {
     for (let j = 0; j < surfer.scores.length; j++) {
       let score = surfer.scores[j];
       let line = score.raw_score + " x " + score.weight + " = " + score.weighted;
-      if (j === 0) {
-        waves = line;
-      } else {
-        waves = waves + "  |  " + line;
-      }
+      if (j === 0) { waves = line; } else { waves = waves + "  |  " + line; }
     }
 
     let box = document.createElement("div");
@@ -229,31 +204,25 @@ function drawHeatScores(data) {
       "<input type='number' step='0.1' min='0' max='10' placeholder='Score 0-10' required />" +
       "<input type='number' step='0.1' min='1' max='1.3' value='1.0' required />" +
       "<button type='submit'>Add wave</button>";
-    form.onsubmit = makeScoreSender(surfer.id, form);
+
+    form.onsubmit = async function (event) {
+      event.preventDefault();
+      let inputs = form.querySelectorAll("input");
+      let updated = await api("/api/scores", "POST", {
+        heat_id: openHeatId,
+        surfer_id: surfer.id,
+        raw_score: Number(inputs[0].value),
+        weight: Number(inputs[1].value)
+      });
+      if (updated !== null) {
+        drawHeatScores(updated);
+        loadLeaderboard();
+      }
+    };
 
     box.appendChild(form);
     list.appendChild(box);
   }
-}
-
-// Gives each surfer's form its own submit function.
-function makeScoreSender(surferId, form) {
-  return async function (event) {
-    event.preventDefault();
-    let inputs = form.querySelectorAll("input");
-
-    let wave = {};
-    wave.heat_id = openHeatId;
-    wave.surfer_id = surferId;
-    wave.raw_score = Number(inputs[0].value);
-    wave.weight = Number(inputs[1].value);
-
-    let data = await api("/api/scores", "POST", wave);
-    if (data !== null) {
-      drawHeatScores(data);
-      loadLeaderboard();
-    }
-  };
 }
 
 async function openHeat(heatId) {
@@ -269,24 +238,15 @@ async function openHeat(heatId) {
 
 async function loadLeaderboard() {
   let data = await api("/api/leaderboard", "GET", null);
-  if (data === null) {
-    return;
-  }
+  if (data === null) { return; }
 
   let body = document.querySelector("#leaderboardTable tbody");
   body.innerHTML = "";
-
   for (let i = 0; i < data.leaderboard.length; i++) {
     let surfer = data.leaderboard[i];
-    let row = body.insertRow();
-    row.insertCell().textContent = surfer.place;
-    row.insertCell().textContent = surfer.name;
-    row.insertCell().textContent = surfer.group_name;
-    row.insertCell().textContent = surfer.skill;
-    row.insertCell().textContent = surfer.heats_surfed;
-    row.insertCell().textContent = surfer.wave_count;
-    row.insertCell().textContent = surfer.best_wave.toFixed(2);
-    row.insertCell().textContent = surfer.total.toFixed(2);
+    addRow(body, [surfer.place, surfer.name, surfer.group_name, surfer.skill,
+                  surfer.heats_surfed, surfer.wave_count,
+                  surfer.best_wave.toFixed(2), surfer.total.toFixed(2)]);
   }
 }
 
@@ -295,34 +255,25 @@ async function loadLeaderboard() {
 function drawForecast(data) {
   let body = document.querySelector("#forecastTable tbody");
   body.innerHTML = "";
-
   for (let i = 0; i < data.slots.length; i++) {
     let slot = data.slots[i];
-    let row = body.insertRow();
-    row.insertCell().textContent = slot.rank;
-    row.insertCell().textContent = slot.slot_time;
-    row.insertCell().textContent = slot.wave_height;
-    row.insertCell().textContent = slot.tide_level;
-    row.insertCell().textContent = slot.suitability.toFixed(3);
+    addRow(body, [slot.rank, slot.slot_time, slot.wave_height,
+                  slot.tide_level, slot.suitability.toFixed(3)]);
   }
 }
 
 async function loadForecast() {
   let data = await api("/api/forecast", "GET", null);
-  if (data !== null) {
-    drawForecast(data);
-  }
+  if (data !== null) { drawForecast(data); }
 }
 
 async function submitForecast(event) {
   event.preventDefault();
-
-  let slot = {};
-  slot.slot_time = document.getElementById("slotTime").value;
-  slot.wave_height = Number(document.getElementById("waveHeight").value);
-  slot.tide_level = Number(document.getElementById("tideLevel").value);
-
-  let data = await api("/api/forecast", "POST", slot);
+  let data = await api("/api/forecast", "POST", {
+    slot_time: document.getElementById("slotTime").value,
+    wave_height: Number(document.getElementById("waveHeight").value),
+    tide_level: Number(document.getElementById("tideLevel").value)
+  });
   if (data !== null) {
     drawForecast(data);
     document.getElementById("forecastForm").reset();
@@ -338,27 +289,21 @@ async function loadSheet() {
   }
 
   let data = await api("/api/sheet?round=" + currentRound, "GET", null);
-  if (data === null) {
-    return;
-  }
+  if (data === null) { return; }
 
   let text = "<h2>Escola de Surf Peniche - Round " + data.round_number + "</h2>";
-
   for (let i = 0; i < data.heats.length; i++) {
     let heat = data.heats[i];
     text = text + "<div class='sheet-heat'><h3>Heat " + heat.heat_number + "</h3>" +
            "<table><thead><tr><th>Name</th><th>Group</th><th>Skill</th>" +
            "<th>Wave 1</th><th>Wave 2</th><th>Total</th></tr></thead><tbody>";
-
     for (let j = 0; j < heat.surfers.length; j++) {
       let surfer = heat.surfers[j];
       text = text + "<tr><td>" + surfer.name + "</td><td>" + surfer.group_name +
              "</td><td>" + surfer.skill + "</td><td></td><td></td><td></td></tr>";
     }
-
     text = text + "</tbody></table></div>";
   }
-
   document.getElementById("sheet").innerHTML = text;
 }
 
@@ -366,12 +311,10 @@ async function loadSheet() {
 
 async function submitLogin(event) {
   event.preventDefault();
-
-  let details = {};
-  details.username = document.getElementById("username").value;
-  details.password = document.getElementById("password").value;
-
-  let data = await api("/api/login", "POST", details);
+  let data = await api("/api/login", "POST", {
+    username: document.getElementById("username").value,
+    password: document.getElementById("password").value
+  });
   if (data !== null) {
     applyRole(data.role, data.username);
     document.getElementById("loginForm").reset();
@@ -387,15 +330,10 @@ async function clickLogout() {
 
 // ---- Setting up the buttons ---------------------------------------------
 
-function makeScreenOpener(name) {
-  return function () {
-    showScreen(name);
-  };
-}
-
 let menuButtons = document.querySelectorAll("#menu button[data-screen]");
 for (let i = 0; i < menuButtons.length; i++) {
-  menuButtons[i].onclick = makeScreenOpener(menuButtons[i].dataset.screen);
+  let button = menuButtons[i];
+  button.onclick = function () { showScreen(button.dataset.screen); };
 }
 
 document.getElementById("surferForm").onsubmit = submitSurfer;
@@ -404,7 +342,7 @@ document.getElementById("loginForm").onsubmit = submitLogin;
 document.getElementById("logoutBtn").onclick = clickLogout;
 document.getElementById("drawBtn").onclick = clickDraw;
 document.getElementById("advanceBtn").onclick = clickAdvance;
-document.getElementById("backToDraw").onclick = makeScreenOpener("draw");
+document.getElementById("backToDraw").onclick = function () { showScreen("draw"); };
 document.getElementById("printBtn").onclick = function () { window.print(); };
 
 document.getElementById("roundSelect").onchange = function (event) {
@@ -420,8 +358,7 @@ document.getElementById("sheetRound").onchange = function (event) {
 
 // SC12: the leaderboard redraws every 2 seconds, with no page refresh.
 setInterval(function () {
-  let leaderboard = document.getElementById("screen-leaderboard");
-  if (leaderboard.classList.contains("visible")) {
+  if (document.getElementById("screen-leaderboard").classList.contains("visible")) {
     loadLeaderboard();
   }
 }, 2000);

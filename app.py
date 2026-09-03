@@ -1,15 +1,10 @@
 """Surf Heat Manager: the web server that joins the browser to the database."""
 
-from flask import Flask
-from flask import jsonify
-from flask import render_template
-from flask import request
-from flask import session
+from flask import Flask, jsonify, render_template, request, session
 
 import database
 from forecast_manager import forecast_manager
-from heat_manager import MAX_SURFERS
-from heat_manager import heat_manager
+from heat_manager import MAX_SURFERS, heat_manager
 from score_manager import score_manager
 
 app = Flask(__name__)
@@ -24,6 +19,19 @@ def is_director():
 def not_allowed():
     """The message sent back when a viewer tries to change something."""
     return jsonify({"error": "Only the director can do that."}), 403
+
+
+def bad_input(error):
+    """The message sent back when the director types something invalid."""
+    return jsonify({"error": str(error)}), 400
+
+
+def heats_as_list(heats):
+    """Turn heat objects into dictionaries the browser can read."""
+    heat_list = []
+    for heat in heats:
+        heat_list.append(heat.as_dict())
+    return heat_list
 
 
 # ---- The page -----------------------------------------------------------
@@ -45,12 +53,9 @@ def get_session():
 @app.route("/api/login", methods=["POST"])
 def login():
     data = request.get_json()
-    username = data.get("username", "")
-    password = data.get("password", "")
-
     rows = database.query(
         "SELECT * FROM users WHERE username = ? AND password_hash = ?",
-        (username, database.hash_password(password)))
+        (data.get("username", ""), database.hash_password(data.get("password", ""))))
 
     if len(rows) == 0:
         return jsonify({"error": "Wrong username or password."}), 401
@@ -86,11 +91,8 @@ def add_surfer():
         heat_manager.add_surfer(data.get("name", ""),
                                 int(data.get("skill", 0)),
                                 data.get("group_name", ""))
-    except ValueError as error:
-        return jsonify({"error": str(error)}), 400
-    except TypeError as error:
-        return jsonify({"error": str(error)}), 400
-
+    except (ValueError, TypeError) as error:
+        return bad_input(error)
     return get_surfers()
 
 
@@ -99,14 +101,9 @@ def add_surfer():
 @app.route("/api/heats")
 def get_heats():
     round_number = int(request.args.get("round", 1))
-
-    heats = []
-    for heat in heat_manager.get_heats(round_number):
-        heats.append(heat.as_dict())
-
     return jsonify({"round_number": round_number,
                     "rounds": heat_manager.rounds(),
-                    "heats": heats})
+                    "heats": heats_as_list(heat_manager.get_heats(round_number))})
 
 
 @app.route("/api/draw", methods=["POST"])
@@ -117,8 +114,7 @@ def draw():
     try:
         heat_manager.draw_round(1)
     except ValueError as error:
-        return jsonify({"error": str(error)}), 400
-
+        return bad_input(error)
     return get_heats()
 
 
@@ -140,14 +136,12 @@ def add_score():
     data = request.get_json()
     try:
         heat_id = int(data.get("heat_id"))
-        surfer_id = int(data.get("surfer_id"))
-        raw_score = float(data.get("raw_score"))
-        weight = float(data.get("weight", 1.0))
-        score_manager.add_score(heat_id, surfer_id, raw_score, weight)
-    except ValueError as error:
-        return jsonify({"error": str(error)}), 400
-    except TypeError as error:
-        return jsonify({"error": str(error)}), 400
+        score_manager.add_score(heat_id,
+                                int(data.get("surfer_id")),
+                                float(data.get("raw_score")),
+                                float(data.get("weight", 1.0)))
+    except (ValueError, TypeError) as error:
+        return bad_input(error)
 
     # The heat is sent straight back so the browser can redraw the new totals.
     return jsonify(score_manager.heat_results(heat_id))
@@ -163,20 +157,13 @@ def advance():
     data = request.get_json()
     try:
         round_number = int(data.get("round_number", 1))
-        top_n = int(data.get("top_n", 2))
-        new_heats = score_manager.advance(round_number, top_n)
-    except ValueError as error:
-        return jsonify({"error": str(error)}), 400
-    except TypeError as error:
-        return jsonify({"error": str(error)}), 400
-
-    heats = []
-    for heat in new_heats:
-        heats.append(heat.as_dict())
+        new_heats = score_manager.advance(round_number, int(data.get("top_n", 2)))
+    except (ValueError, TypeError) as error:
+        return bad_input(error)
 
     return jsonify({"round_number": round_number + 1,
                     "rounds": heat_manager.rounds(),
-                    "heats": heats})
+                    "heats": heats_as_list(new_heats)})
 
 
 # ---- Leaderboard (SC11, SC12) ------------------------------------------
@@ -201,15 +188,11 @@ def add_forecast():
 
     data = request.get_json()
     try:
-        slot_time = data.get("slot_time", "")
-        wave_height = float(data.get("wave_height"))
-        tide_level = float(data.get("tide_level"))
-        forecast_manager.add_slot(slot_time, wave_height, tide_level)
-    except ValueError as error:
-        return jsonify({"error": str(error)}), 400
-    except TypeError as error:
-        return jsonify({"error": str(error)}), 400
-
+        forecast_manager.add_slot(data.get("slot_time", ""),
+                                  float(data.get("wave_height")),
+                                  float(data.get("tide_level")))
+    except (ValueError, TypeError) as error:
+        return bad_input(error)
     return get_forecast()
 
 
@@ -218,12 +201,8 @@ def add_forecast():
 @app.route("/api/sheet")
 def sheet():
     round_number = int(request.args.get("round", 1))
-
-    heats = []
-    for heat in heat_manager.get_heats(round_number):
-        heats.append(heat.as_dict())
-
-    return jsonify({"round_number": round_number, "heats": heats})
+    return jsonify({"round_number": round_number,
+                    "heats": heats_as_list(heat_manager.get_heats(round_number))})
 
 
 if __name__ == "__main__":
