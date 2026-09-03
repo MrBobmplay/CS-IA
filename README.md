@@ -11,15 +11,48 @@ IB Computer Science Internal Assessment project.
 
 ## Running it
 
+You need Python 3. Everything else the project uses (SQLite, the browser)
+is already on the computer.
+
+**Windows**
+
+1. Install Python from python.org, and tick **Add python.exe to PATH** on the
+   first screen of the installer.
+2. Open the project folder in File Explorer, then type `cmd` in the address
+   bar and press Enter. This opens Command Prompt already in that folder.
+3. Run these two commands:
+
 ```
 pip install -r requirements.txt
+python app.py
+```
+
+**macOS and Linux**
+
+```
+pip3 install -r requirements.txt
 python3 app.py
 ```
 
-Then open http://localhost:5000.
+Then open http://localhost:5000 in any browser. Press Ctrl+C in the terminal
+to stop the server.
 
 The default director account is `director` / `surf2024`. Viewers do not log in
 and only see the leaderboard.
+
+### If it does not start
+
+- **`No such file or directory: 'schema.sql'`** - the terminal is not in the
+  project folder. Use `cd` to move into it, then run the command again.
+- **`'python' is not recognized`** (Windows) - Python was installed without
+  being added to PATH. Either reinstall with that box ticked, or use `py`
+  instead of `python`.
+- **`Address already in use`** - something else is using port 5000. Change
+  the last line of `app.py` to a different number, such as `port=5001`, and
+  open http://localhost:5001 instead.
+
+The database file `surf.db` is created in the project folder the first time
+the program runs. Deleting it starts a fresh competition.
 
 ## Files
 
