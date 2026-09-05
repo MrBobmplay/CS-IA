@@ -68,7 +68,7 @@ the program runs. Deleting it starts a fresh competition.
 | `templates/index.html` | The six screens |
 | `static/app.js` | Fetch calls and screen drawing |
 | `static/style.css` | Screen styles and the print rules |
-| `static/fonts/` | The Montserrat font file, bundled so no internet is needed |
+| `static/fonts/` | The Roboto Slab font file, bundled so no internet is needed |
 
 ## Algorithms
 
@@ -93,9 +93,9 @@ the program runs. Deleting it starts a fresh competition.
 
 ## Font
 
-The interface uses Montserrat. The font file is stored in `static/fonts/`
+The interface uses Roboto Slab. The font file is stored in `static/fonts/`
 rather than loaded from the internet, so the app works with no connection -
 which matters when the director is running a competition on the beach.
 
-Montserrat is by the Montserrat Project Authors and is used under the SIL
-Open Font License, Version 1.1. The licence is in `static/fonts/OFL.txt`.
+Roboto Slab was designed by Christian Robertson and is used under the Apache
+License, Version 2.0. The licence is in `static/fonts/LICENSE.txt`.
