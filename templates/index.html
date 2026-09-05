@@ -14,6 +14,8 @@
   <span id="whoami"></span>
 </header>
 
+<div class="layout">
+
 <nav class="no-print" id="menu">
   <button data-screen="leaderboard">Leaderboard</button>
   <button data-screen="surfers" class="director">Add Surfer</button>
@@ -24,8 +26,8 @@
   <button id="logoutBtn" class="director">Log out</button>
 </nav>
 
+<main>
 <p id="message" class="no-print"></p>
-
 
 <section id="screen-login" class="screen no-print">
   <h2>Director login</h2>
@@ -36,7 +38,6 @@
     <button type="submit">Log in</button>
   </form>
 </section>
-
 
 <section id="screen-surfers" class="screen no-print">
   <h2>Add surfer</h2>
@@ -53,7 +54,6 @@
   </table>
 </section>
 
-
 <section id="screen-draw" class="screen no-print">
   <h2>Heat draw</h2>
   <div class="controls">
@@ -65,13 +65,11 @@
   <div id="heatList" class="panels"></div>
 </section>
 
-
 <section id="screen-scores" class="screen no-print">
   <h2 id="scoreTitle">Score entry</h2>
   <button id="backToDraw">Back to heat draw</button>
   <div id="scoreList"></div>
 </section>
-
 
 <section id="screen-forecast" class="screen no-print">
   <h2>Forecast slots</h2>
@@ -87,7 +85,6 @@
   </table>
 </section>
 
-
 <section id="screen-leaderboard" class="screen">
   <h2>Leaderboard</h2>
   <p class="hint no-print">Updates automatically every 2 seconds.</p>
@@ -97,7 +94,6 @@
   </table>
 </section>
 
-
 <section id="screen-sheet" class="screen">
   <div class="no-print controls">
     <label>Round <select id="sheetRound"></select></label>
@@ -105,6 +101,9 @@
   </div>
   <div id="sheet"></div>
 </section>
+
+</main>
+</div>
 
 <script src="/static/app.js"></script>
 </body>

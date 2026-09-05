@@ -5,26 +5,50 @@ body {
   font-family: "Trebuchet MS", Helvetica, sans-serif;
   color: #102f24;
   background: #f2f9f5;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
+
+.layout { display: flex; flex: 1; align-items: stretch; }
+main { flex: 1; min-width: 0; }
 
 header { background: #0b3d2e; color: #fff; padding: 16px 24px; position: relative; }
 header h1 { margin: 0; font-size: 25px; letter-spacing: 0.3px; }
 header p { margin: 4px 0 0; opacity: 0.85; }
 #whoami { position: absolute; right: 24px; top: 20px; }
 
-nav { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 24px; background: #16704f; }
+nav {
+  width: 185px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 12px;
+  background: #16704f;
+}
 nav button {
-  background: #fff;
+  background: transparent;
   border: none;
   border-radius: 4px;
-  padding: 8px 14px;
+  padding: 10px 12px;
   cursor: pointer;
   font-size: 14px;
   font-family: inherit;
-  color: #102f24;
+  color: #fff;
+  text-align: left;
+  width: 100%;
 }
-nav button:hover { background: #cdebdc; }
-nav button.active { background: #ffd166; }
+nav button:hover { background: #0b3d2e; }
+nav button.active { background: #ffd166; color: #102f24; font-weight: bold; }
+#logoutBtn { margin-top: auto; }
+
+@media (max-width: 700px) {
+  .layout { display: block; }
+  nav { width: auto; flex-direction: row; flex-wrap: wrap; }
+  nav button { width: auto; }
+  #logoutBtn { margin-top: 0; }
+}
 
 #message { margin: 12px 24px 0; color: #b3261e; min-height: 18px; }
 .hint { color: #4d7566; font-size: 14px; }
@@ -95,6 +119,7 @@ th { background: #e3f2ea; }
   @page { size: A4; margin: 15mm; }
   body { background: #fff; }
   .no-print, header, nav, #message { display: none !important; }
+  .layout { display: block; }
   .screen { display: none; padding: 0; }
   #screen-sheet { display: block !important; }
   table { font-size: 12pt; }
