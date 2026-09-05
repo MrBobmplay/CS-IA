@@ -10,6 +10,7 @@
 body {
   margin: 0;
   font-family: "Roboto Slab", Georgia, "Times New Roman", serif;
+  font-weight: 200;
   color: #102f24;
   background: #f2f9f5;
   display: flex;
@@ -21,7 +22,8 @@ body {
 main { flex: 1; min-width: 0; }
 
 header { background: #0b3d2e; color: #fff; padding: 16px 24px; position: relative; }
-header h1 { margin: 0; font-size: 25px; letter-spacing: 0.3px; }
+h1, h2, h3 { font-weight: 300; }
+header h1 { margin: 0; font-size: 25px; letter-spacing: 0.3px; font-weight: 200; }
 header p { margin: 4px 0 0; opacity: 0.85; }
 #whoami { position: absolute; right: 24px; top: 20px; }
 
@@ -47,7 +49,7 @@ nav button {
   width: 100%;
 }
 nav button:hover { background: #0b3d2e; }
-nav button.active { background: #ffd166; color: #102f24; font-weight: bold; }
+nav button.active { background: #ffd166; color: #102f24; font-weight: 400; }
 #logoutBtn { margin-top: auto; }
 
 @media (max-width: 700px) {
@@ -119,7 +121,7 @@ th { background: #e3f2ea; }
 }
 .surfer-scores h3 { margin: 0 0 8px; color: #0b3d2e; }
 .waves { color: #4d7566; font-size: 14px; margin: 4px 0 8px; }
-.total { font-weight: bold; }
+.total { font-weight: 400; }
 .sheet-heat { page-break-inside: avoid; margin-bottom: 18px; }
 
 @media print {
