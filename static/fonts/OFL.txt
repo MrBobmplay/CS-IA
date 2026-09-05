@@ -1,0 +1,11 @@
+Raleway is used under the SIL Open Font License, Version 1.1.
+
+Designers: Matt McInerney, Pablo Impallari, Rodrigo Fuenzalida
+Source: https://fonts.google.com/specimen/Raleway
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+The licence permits the font to be used, studied, modified and redistributed
+freely, including bundled inside a program, as long as it is not sold on its
+own and this notice is kept with it.
+
+The full licence text is available at https://openfontlicense.org
