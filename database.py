@@ -1,5 +1,3 @@
-"""SQLite connection helpers for Surf Heat Manager."""
-
 import hashlib
 import sqlite3
 
@@ -8,14 +6,12 @@ SCHEMA_FILE = "schema.sql"
 
 
 def connect():
-    """Open the database with rows that behave like dictionaries."""
     conn = sqlite3.connect(DB_FILE)
     conn.row_factory = sqlite3.Row
     return conn
 
 
 def query(sql, params=()):
-    """Run a SELECT and return all rows."""
     conn = connect()
     cursor = conn.execute(sql, params)
     rows = cursor.fetchall()
@@ -24,7 +20,6 @@ def query(sql, params=()):
 
 
 def run(sql, params=()):
-    """Run an INSERT, UPDATE or DELETE and return the new row id."""
     conn = connect()
     cursor = conn.execute(sql, params)
     conn.commit()
@@ -34,12 +29,10 @@ def run(sql, params=()):
 
 
 def hash_password(password):
-    """Passwords are stored as a SHA-256 hash, never as plain text."""
     return hashlib.sha256(password.encode()).hexdigest()
 
 
 def setup():
-    """Create the tables and add the default director account."""
     schema_file = open(SCHEMA_FILE)
     schema = schema_file.read()
     schema_file.close()

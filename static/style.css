@@ -80,7 +80,7 @@ th { background: #e3f1f4; }
 .total { font-weight: bold; }
 .sheet-heat { page-break-inside: avoid; margin-bottom: 18px; }
 
-/* SC15: the printed A4 sheet shows only the heat tables. */
+
 @media print {
   @page { size: A4; margin: 15mm; }
   body { background: #fff; }

@@ -1,7 +1,3 @@
-// Surf Heat Manager front end.
-// Every screen is drawn from the JSON the Flask back end sends back, so
-// nothing on the page ever needs to be refreshed.
-
 let currentRound = 1;
 let openHeatId = 0;
 
@@ -9,7 +5,6 @@ function showMessage(text) {
   document.getElementById("message").textContent = text;
 }
 
-// Adds one row to a table, with one cell for each value given.
 function addRow(body, values) {
   let row = body.insertRow();
   for (let i = 0; i < values.length; i++) {
@@ -17,8 +12,6 @@ function addRow(body, values) {
   }
 }
 
-// This is the asynchronous function. It sends one request to the back end
-// and gives back the JSON, or null if the back end refused the request.
 async function api(address, method, body) {
   let settings = { method: method };
   if (body !== null) {
@@ -62,7 +55,6 @@ function showScreen(name) {
   if (name === "sheet") { loadSheet(); }
 }
 
-// SC16: a viewer only sees the leaderboard, the director sees every screen.
 function applyRole(role, username) {
   let parts = document.querySelectorAll(".director");
   for (let i = 0; i < parts.length; i++) {
@@ -82,7 +74,6 @@ function applyRole(role, username) {
   }
 }
 
-// ---- Surfers (SC1, SC2) --------------------------------------------------
 
 function drawSurfers(data) {
   let body = document.querySelector("#surferTable tbody");
@@ -113,7 +104,6 @@ async function submitSurfer(event) {
   }
 }
 
-// ---- Heat draw (SC3, SC4, SC5) ------------------------------------------
 
 function fillRounds(select, rounds, chosen) {
   select.innerHTML = "";
@@ -164,7 +154,6 @@ async function clickDraw() {
   if (data !== null) { drawHeats(data); }
 }
 
-// SC9: the director chooses how many surfers advance from each heat.
 async function clickAdvance() {
   let data = await api("/api/advance", "POST", {
     round_number: currentRound,
@@ -173,7 +162,6 @@ async function clickAdvance() {
   if (data !== null) { drawHeats(data); }
 }
 
-// ---- Score entry (SC6, SC7, SC8) ----------------------------------------
 
 function drawHeatScores(data) {
   document.getElementById("scoreTitle").textContent =
@@ -234,7 +222,6 @@ async function openHeat(heatId) {
   }
 }
 
-// ---- Leaderboard (SC11, SC12) -------------------------------------------
 
 async function loadLeaderboard() {
   let data = await api("/api/leaderboard", "GET", null);
@@ -250,7 +237,6 @@ async function loadLeaderboard() {
   }
 }
 
-// ---- Forecast (SC13) -----------------------------------------------------
 
 function drawForecast(data) {
   let body = document.querySelector("#forecastTable tbody");
@@ -280,7 +266,6 @@ async function submitForecast(event) {
   }
 }
 
-// ---- Printable heat sheet (SC14, SC15) ----------------------------------
 
 async function loadSheet() {
   let rounds = await api("/api/heats?round=" + currentRound, "GET", null);
@@ -307,7 +292,6 @@ async function loadSheet() {
   document.getElementById("sheet").innerHTML = text;
 }
 
-// ---- Login (SC16) --------------------------------------------------------
 
 async function submitLogin(event) {
   event.preventDefault();
@@ -328,7 +312,6 @@ async function clickLogout() {
   showScreen("leaderboard");
 }
 
-// ---- Setting up the buttons ---------------------------------------------
 
 let menuButtons = document.querySelectorAll("#menu button[data-screen]");
 for (let i = 0; i < menuButtons.length; i++) {
@@ -356,9 +339,7 @@ document.getElementById("sheetRound").onchange = function (event) {
   loadSheet();
 };
 
-// ---- Starting up ---------------------------------------------------------
 
-// SC12: the leaderboard redraws every 2 seconds, with no page refresh.
 setInterval(function () {
   if (document.getElementById("screen-leaderboard").classList.contains("visible")) {
     loadLeaderboard();
